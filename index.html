@@ -121,11 +121,9 @@
   button.ico .emo{font-size:24px;line-height:1}
   button.txt{min-width:84px;font-weight:600}
   button.ico.sel, button.txt.sel{background:#24364f;border-color:#6fb4ff;color:#fff;box-shadow:0 0 10px #6fb4ff66}
-  #startBtn.run{background:#1d3a24;border-color:var(--on);color:#d6ffde;box-shadow:0 0 10px #3fb95066}
-  #mLive.sel{background:#4a1f22;border-color:var(--rec);box-shadow:0 0 10px #ff5d5d55}
   /* je Modus Unnötiges ausblenden */
   body.osc #tab_draw, body.osc #tab_play, body.osc #tab_file, body.osc #rowDraw, body.osc #rowPlay, body.osc #rowFile{display:none!important}
-  body.stock #sineBtn, body.stock #harmBtn, body.stock #cluBtn, body.stock #polyBtn, body.stock #noiseBtn, body.stock #mLive, body.stock #tLine, body.stock #tCurve{display:none!important}
+  body.stock #sineBtn, body.stock #harmBtn, body.stock #cluBtn, body.stock #polyBtn, body.stock #noiseBtn, body.stock #recBtn, body.stock #tLine, body.stock #tCurve{display:none!important}
   body:not(.stock) #editBtn{display:none}
   /* Im Stockhausen-Modus sind die Klangknöpfe ausgeblendet – ein Hinweis zeigt warum und beendet den Modus */
 
@@ -147,8 +145,6 @@
   body.light .tab.open{color:#1b1f25}
   body.light .tab .led{background:#c3c9d2}
   body.light button.ico.sel, body.light button.txt.sel{background:#dbe9fb;border-color:#2b78d6;color:#123a6b;box-shadow:0 0 10px #2b78d644}
-  body.light #mLive.sel{background:#fbdcdc;border-color:#d63a3a;color:#7a1414}
-  body.light #startBtn.run{background:#d6f2dc;border-color:#2e9e44;color:#14532d}
   body.light #tErase.sel{background:#d63a3a;color:#fff}
   body.light .tog .led{background:#c3c9d2;box-shadow:inset 0 1px 2px #0002}
   body.light #toneBtn.on{background:#d6f2dc;border-color:#2e9e44;color:#14532d}
@@ -224,7 +220,8 @@
   .seg button.sel{background:#3d4450;color:#fff}
   #tErase.sel{background:#c62828;border-color:#ff8a80;color:#fff;box-shadow:0 0 12px #ff5d5d99}
 
-  #startBtn{font-weight:600}
+  #recBtn, #playBtn{display:flex;align-items:center;gap:7px;padding:0 14px}
+  #recBtn .ic, #playBtn .ic{display:flex}
   .sp{flex:1}
   .sep{width:1px;height:28px;background:var(--line)}
   #dlg{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:9}
@@ -327,9 +324,8 @@
       <button class="ico" id="editBtn" title="Edit: Anfasser zeigen"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 H8 L20 8 L16 4 L4 16 Z M13 7 L17 11"/></svg></button>
     </div>
     <div class="grp" id="rowPlay" data-k="play">
-      <button class="txt sel" id="mLive">Live</button>
-      <button class="txt" id="mPlay">Lesen</button>
-      <button class="ico" id="startBtn" title="Start"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+      <button class="txt" id="recBtn" title="Aufnahme starten/anhalten"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg></span>Aufnahme</button>
+      <button class="txt" id="playBtn" title="Wiedergabe starten/anhalten"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg></span>Wiedergabe</button>
       <button class="tog" id="tempoBtn" title="Tempo: mit zwei Fingern die Zeitleiste spreizen/stauchen"><span id="tempoTxt">Tempo</span></button>
       <button class="ico" id="tempoReset" title="Tempo zurück auf 100 %" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 A8 8 0 1 0 7 5.8"/><path d="M4 4 V9 H9"/></svg></button>
       <button class="ico" id="homeBtn" title="Zurück zum Anfang"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5v15L1.5 12zM22.5 4.5v15L12 12z"/></svg></button>
@@ -405,6 +401,7 @@ const S = {
 };
 let curves = { pitch: [], vol: [] };      // Partitur (vorgezeichnet)
 // Rauschen der aktiven Stimme: Farbe, Filter, Mitte (fest in Hz oder als Vielfaches des Grundtons), Bandbreite, Mischung Ton↔Rauschen
+let sineAmp = 1;                          // Stärke des Sinustons (im Spektrum mit dem Finger bis 0 ziehbar)
 const defaultNoise = ()=>({on:false, color:'white', filter:'band', track:true, ratio:3, fc:1200, bw:2, mix:0.3});
 let noise = defaultNoise();
 let take   = { pitch: [], vol: [] };      // gespielte Linie
@@ -451,7 +448,7 @@ function save(){
       p:pack(curves.pitch), v:pack(curves.vol), tp:pack(take.pitch), tv:pack(take.vol),
       sh:spec.harm.map(v=>+v.toFixed(4)), sc:spec.cluster.map(v=>+v.toFixed(4)), rc:raster.cluster,
       un:units.filter(complete).map(u=>({t0:u.t0,t1:u.t1,pa:u.pa,pb:u.pb,r:u.r,v0:u.v0,v1:u.v1})),
-      stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, voice:S.voice, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch
+      stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, voice:S.voice, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp
     }));
   }catch(e){}
 }
@@ -471,7 +468,7 @@ function load(){
     if(Array.isArray(d.sh)) spec.harm = Array.from({length:EQ.harm.n},(_,i)=> d.sh[i]!=null ? d.sh[i] : 0);
     if(d.rc) raster.cluster=d.rc;
     if(Array.isArray(d.sc)) spec.cluster = Array.from({length:EQ.cluster.n},(_,i)=> d.sc[i]!=null ? d.sc[i] : 0);
-    unpackLayers(d); if(d.voice) S.voice=d.voice; if(d.nz) noise=Object.assign(defaultNoise(), d.nz); if(d.stretch) S.stretch=d.stretch;
+    unpackLayers(d); if(d.voice) S.voice=d.voice; if(d.nz) noise=Object.assign(defaultNoise(), d.nz); if(d.stretch) S.stretch=d.stretch; if(d.sa!=null) sineAmp=d.sa;
   }catch(e){}
 }
 
@@ -527,12 +524,13 @@ class Synth{
   }
   set(type,f,g,force){
     const t=ac.currentTime, L=this.last; this.type=type;
+    if(this.sineAmp===undefined) this.sineAmp=1;
     if(force||f!==L.f){ this.fs.offset.setTargetAtTime(f,t,0.012); L.f=f; if(this.ncfg && this.ncfg.track) this.noiseFreq(f); }
     const nc=this.ncfg, non=!!(nc && nc.on);
     const tg = non ? 1-nc.mix : 1;                                   // Tonanteil
     const ng = non ? nc.mix * (nc.filter==='band' ? clamp(Math.sqrt(6/nc.bw),1,6) : 1) : 0;   // Rauschanteil (schmales Band wird angehoben)
     if(force||ng!==L.ng){ this.nG.gain.setTargetAtTime(ng,t,0.03); L.ng=ng; }
-    const gs=type==='sine'?tg:0, gh=type==='harm'?tg:0, gc=type==='cluster'?tg:0;
+    const gs=type==='sine'?tg*this.sineAmp:0, gh=type==='harm'?tg:0, gc=type==='cluster'?tg:0;
     if(force||gs!==L.gs){ this.sG.gain.setTargetAtTime(gs,t,0.02); L.gs=gs; }
     if(force||gh!==L.gh){ this.hG.gain.setTargetAtTime(gh,t,0.02); L.gh=gh; }
     if(force||gc!==L.gc){ this.cBus.gain.setTargetAtTime(gc,t,0.02); L.gc=gc; }
@@ -557,7 +555,7 @@ function noiseBuf(c){
   return nbufs[c]=b;
 }
 const bwToQ = bw => Math.sqrt(Math.pow(2,bw))/(Math.pow(2,bw)-1);
-function applyNoise(){ if(!ac) return; getSyn(0).setNoise(noise); if(S.osc && S.oscPoly) getSyn(1).setNoise(noise); }
+function applyNoise(){ if(!ac) return; getSyn(0).sineAmp=sineAmp; getSyn(0).setNoise(noise); if(S.osc && S.oscPoly){ getSyn(1).sineAmp=sineAmp; getSyn(1).setNoise(noise); } }
 function limitParts(a,limit){ if(!(limit<Infinity)) return a; let n=0; return a.map(v=>{ if(v>0){ n++; return n<=limit?v:0; } return 0; }); }
 function getSyn(i){ if(!ac) return null; if(!syn[i]) syn[i]=new Synth(); return syn[i]; }
 function muteOthers(){ for(let i=1;i<syn.length;i++) if(syn[i]) syn[i].mute(); }
@@ -869,7 +867,7 @@ function pinchState(){
 }
 function startPinch(){ if(S.osc){ oscPinchStart(); return; } const p=pinchState(); pinch={ d0:p.d, pps0:S.pps, t:tOfX(p.cx), st0:S.stretch }; }
 function updatePinch(){ if(S.osc){ oscPinchMove(); return; } const p=pinchState();
-  if(S.tempoMode){ setStretch(pinch.st0*p.d/pinch.d0); return; }    // spreizen = langsamer, stauchen = schneller
+  if(S.tempoMode){ setStretch(pinch.st0*pinch.d0/p.d); return; }    // Zeitleiste dehnen (spreizen) = schneller, stauchen = langsamer
   setZoom(pinch.pps0*p.d/pinch.d0, p.cx, pinch.t); }
 
 cv.addEventListener('pointerdown', e=>{
@@ -969,7 +967,7 @@ const endGest = e=>{
 cv.addEventListener('pointerup',endGest); cv.addEventListener('pointercancel',endGest);
 cv.addEventListener('wheel', e=>{ e.preventDefault();
   if(S.osc){ if(e.ctrlKey || Math.abs(e.deltaY)>Math.abs(e.deltaX)) { S.oscMs=clamp(S.oscMs*(e.deltaY>0?1.1:1/1.1),0.2,2000); dirty=true; } return; }
-  if(e.ctrlKey){ if(S.tempoMode) setStretch(S.stretch*(e.deltaY<0?1.05:1/1.05)); else setZoom(S.pps*(e.deltaY<0?1.1:1/1.1), e.offsetX, tOfX(e.offsetX)); return; }
+  if(e.ctrlKey){ if(S.tempoMode) setStretch(S.stretch*(e.deltaY<0?1/1.05:1.05)); else setZoom(S.pps*(e.deltaY<0?1.1:1/1.1), e.offsetX, tOfX(e.offsetX)); return; }
   S.scrollX=Math.max(0,S.scrollX+(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY)); dirty=true; },{passive:false});
 const userScrolling = ()=> touches.size>0 || (gest && gest.type!=='draw' && gest.moved);
 
@@ -1009,7 +1007,7 @@ const lvlOfX = x => clamp((x-ELBL)/(EW-ELBL-8));
 function drawEq(){
   if(!EW) return;
   const m=eqMode(), cfg=EQ[m], N=eqN[m];
-  const a = S.voice==='sine' ? spec[m].map((_,k)=>k===0?1:0) : spec[m];     // Sinuston: nur der unterste Strich
+  const a = S.voice==='sine' ? spec[m].map((_,k)=>k===0?sineAmp:0) : spec[m];     // Sinuston: nur der unterste Strich
   ectx.setTransform(dpr,0,0,dpr,0,0);
   ectx.fillStyle='#14171b'; ectx.fillRect(0,0,EW,EH);
   const rh=rowH(), bw=EW-ELBL-8, gap = rh>4 ? 1 : 0;
@@ -1045,7 +1043,7 @@ eqc.addEventListener('pointerdown',e=>{
     if(eqTouches.size>2) return;
   }
   if(eqG) return;
-  if(S.voice==='sine') return;                          // Sinuston: Spektrum nur ansehen
+
   const r=eqc.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
   eqSnap=spec[m].slice();
   eqG={id:e.pointerId,x,y,pen:e.pointerType==='pen'}; setEq(x,y,x,y);
@@ -1069,6 +1067,10 @@ const eqEnd=e=>{
 eqc.addEventListener('pointerup',eqEnd); eqc.addEventListener('pointercancel',eqEnd);
 eqc.addEventListener('wheel',e=>{ e.preventDefault(); const m=eqMode(); eqN[m]=Math.round(clamp(eqN[m]*(e.deltaY>0?1.1:1/1.1),EQ[m].min,EQ[m].max)); drawEq(); },{passive:false});
 function setEq(x0,y0,x1,y1){   // alle überstrichenen Reihen setzen → Wischen zieht eine Kurve
+  if(S.voice==='sine'){                                // Sinuston: nur der Grundton-Strich, bis auf 0
+    if(Math.min(rowOfY(y0),rowOfY(y1))<=0){ sineAmp=lvlOfX(x1); applyNoise(); applyAudio(true); drawEq(); saveSoon(); }
+    return;
+  }
   const m=eqMode(), a=spec[m], r0=rowOfY(y0), r1=rowOfY(y1);
   for(let r=Math.min(r0,r1);r<=Math.max(r0,r1);r++){
     if(r<0||r>=rows()||r%raster[m]!==0) continue;
@@ -1140,10 +1142,22 @@ function layoutSubs(){
 let lastBarW=0;
 addEventListener('resize',()=>{ const w=$('bar').clientWidth; if(w!==lastBarW){ lastBarW=w; layoutSubs(); } });
 
-function setMode(m){ if(S.running) stop(); S.mode=m; $('mLive').classList.toggle('sel',m==='live'); $('mPlay').classList.toggle('sel',m==='play'); dirty=true; }
-$('mLive').onclick=()=>setMode('live'); $('mPlay').onclick=()=>setMode('play');
+function setMode(m){ if(S.running) stop(); S.mode=m; dirty=true; }
+// Aufnahme bzw. Wiedergabe: dieselbe Taste startet und hält an
+function toggleRun(m){
+  if(S.running && S.mode===m){ stop(); return; }
+  if(S.running) stop();
+  S.mode=m; start(); updStart();
+}
+$('recBtn').onclick=()=>toggleRun('live');
+$('playBtn').onclick=()=>toggleRun('play');
 function updStart(){
-  const b=$('startBtn'); b.title=S.running?'Pause':'Start'; b.innerHTML=S.running?'<svg width="26" height="26" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4.5" height="15" rx="1" fill="currentColor"/></svg>':'<svg width="26" height="26" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>'; b.classList.toggle('run',S.running); }
+  for(const [id,m] of [['recBtn','live'],['playBtn','play']]){
+    const b=$(id), on=S.running && S.mode===m;
+    b.querySelector('.ic').innerHTML = on ? '<svg width="20" height="20" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4.5" height="15" rx="1" fill="currentColor"/></svg>' : '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>';
+    b.classList.toggle('run',on);
+  }
+}
 function start(){
   initAudio();
   const end=pieceEnd();
@@ -1185,7 +1199,7 @@ function showRecBar(){ $('recTxt').textContent='Stimme '+(S.layer+1)+' eingespie
 function hideRecBar(){ $('recbar').classList.remove('show'); }
 $('recKeep').onclick=hideRecBar;
 $('recDel').onclick=()=>{ hideRecBar(); curves={pitch:[],vol:[]}; take={pitch:[],vol:[]}; if(S.recPrev!=null) switchLayer(S.recPrev); S.recPrev=null; updPoly(); save(); dirty=true; };
-$('startBtn').onclick=()=>{ S.running ? stop() : start(); };
+
 
 $('homeBtn').onclick=()=>{ S.playT=0; S.scrollX=0; recLast={pitch:null,vol:null}; dirty=true; updateFaders(); };
 $('fitBtn').onclick=fitAll;
@@ -1221,7 +1235,7 @@ let hintGone=false; function hideHint(){ if(hintGone) return; hintGone=true; $('
 // Tastatur (Desktop): Leertaste = Start/Stop, T = Ton, +/- = Zoom
 addEventListener('keydown',e=>{
   if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;          // beim Tippen des Namens keine Tastenkürzel
-  if(e.code==='Space' && S.time){ e.preventDefault(); S.running?stop():start(); }
+  if(e.code==='Space' && S.time){ e.preventDefault(); toggleRun(S.mode); }
   if(e.code==='KeyT') $('toneBtn').click();
   if((e.metaKey||e.ctrlKey) && e.code==='KeyZ'){ e.preventDefault(); undo(); }
   if(S.osc){ if(e.key==='+'){ S.oscMs=clamp(S.oscMs/1.25,0.2,2000); dirty=true; } if(e.key==='-'){ S.oscMs=clamp(S.oscMs*1.25,0.2,2000); dirty=true; }
@@ -1526,7 +1540,7 @@ function serialize(){
     p:pack(curves.pitch), v:pack(curves.vol), tp:pack(take.pitch), tv:pack(take.vol),
     sh:spec.harm.map(v=>+v.toFixed(4)), sc:spec.cluster.map(v=>+v.toFixed(4)), rc:raster.cluster,
     un:units.filter(complete).map(u=>({t0:+u.t0.toFixed(4),t1:+u.t1.toFixed(4),pa:u.pa,pb:u.pb,r:u.r,v0:u.v0,v1:u.v1})),
-    stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch };
+    stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp };
 }
 function applyData(d){
   if(!d || d.app!=='Klangschrift') throw new Error('keine Klangschrift-Datei');
@@ -1539,7 +1553,7 @@ function applyData(d){
   if(d.stk){ Object.assign(STK,d.stk); makeImpulse(); }
   unpackLayers(d);
   noise=Object.assign(defaultNoise(), d.nz||{}); applyNoise(); updNoisePanel();
-  S.stretch=d.stretch||1; updTempo();
+  S.stretch=d.stretch||1; updTempo(); sineAmp = d.sa!=null ? d.sa : 1; applyNoise();
   S.name=d.name||'';
   if(!!d.stock!==S.stock){ $('stockBtn').click(); if(S.stock) setTimeout(()=>toast('Stockhausen-Partitur geöffnet'),2300); }
   if(!S.stock && d.voice && d.voice!==S.voice) setVoice(d.voice);
@@ -1664,19 +1678,20 @@ $('fileIn').onchange=e=>{
 // „Polyphon“ fixiert die aktive Stimme und schaltet zur nächsten (1→2→3→4→1). Fixierte Stimmen sind blass und
 // klingen beim Abspielen und Spielen mit. Jede Stimme hat ihren eigenen Klang (Sinus/Harm./Cluster) und ihr eigenes Spektrum.
 const VCOL=[['#ffb547','#4fd1c5'],['#ff8fa3','#ff8fa3'],['#8fd16a','#8fd16a'],['#6fb4ff','#6fb4ff']];
-function snapshotLayer(){ return {curves, take, voice:S.voice, specH:spec.harm.slice(), specC:spec.cluster.slice(), rasterC:raster.cluster, noise:Object.assign({},noise)}; }
+function snapshotLayer(){ return {curves, take, sineAmp, voice:S.voice, specH:spec.harm.slice(), specC:spec.cluster.slice(), rasterC:raster.cluster, noise:Object.assign({},noise)}; }
 function switchLayer(i){
   stop();
   layers[S.layer]=snapshotLayer();
   const L = layers[i] || {curves:{pitch:[],vol:[]}, take:{pitch:[],vol:[]}, voice:'sine', specH:spec.harm.slice(), specC:spec.cluster.slice(), rasterC:raster.cluster};
   layers[i]=null; S.layer=i;
   curves=L.curves; take=L.take; spec.harm=L.specH.slice(); spec.cluster=L.specC.slice(); raster.cluster=L.rasterC;
+  sineAmp = L.sineAmp!=null ? L.sineAmp : 1;
   noise=Object.assign(defaultNoise(), L.noise||{}); applyNoise(); updNoisePanel();
   setVoice(L.voice); drawEq(); updPoly(); dirty=true; updateFaders(); saveSoon();
 }
 function prepareLayers(){
   if(!ac) return;
-  otherLayers().forEach(({L,i})=>{ const s=getSyn(i+1); s.setSpectrum(L.specH, L.specC, Infinity); s.setNoise(Object.assign(defaultNoise(), L.noise||{})); });
+  otherLayers().forEach(({L,i})=>{ const s=getSyn(i+1); s.setSpectrum(L.specH, L.specC, Infinity); s.sineAmp = L.sineAmp!=null ? L.sineAmp : 1; s.setNoise(Object.assign(defaultNoise(), L.noise||{})); });
 }
 function playLayers(){
   if(!ac) return;
@@ -1689,7 +1704,7 @@ function playLayers(){
 }
 function packLayers(){
   return layers.map((L,i)=> (i===S.layer || !L) ? null : {p:pack(L.curves.pitch), v:pack(L.curves.vol), tp:pack(L.take.pitch), tv:pack(L.take.vol),
-    voice:L.voice, sh:L.specH.map(v=>+v.toFixed(4)), sc:L.specC.map(v=>+v.toFixed(4)), rc:L.rasterC, nz:L.noise||null});
+    voice:L.voice, sh:L.specH.map(v=>+v.toFixed(4)), sc:L.specC.map(v=>+v.toFixed(4)), rc:L.rasterC, nz:L.noise||null, sa:L.sineAmp!=null?L.sineAmp:1});
 }
 function unpackLayers(d){
   layers.fill(null);
@@ -1698,7 +1713,7 @@ function unpackLayers(d){
     if(!x || i===S.layer) return;
     layers[i]={curves:{pitch:unpack(x.p),vol:unpack(x.v)}, take:{pitch:unpack(x.tp),vol:unpack(x.tv)}, voice:x.voice||'sine',
       specH:Array.from({length:EQ.harm.n},(_,k)=>x.sh&&x.sh[k]!=null?x.sh[k]:0),
-      specC:Array.from({length:EQ.cluster.n},(_,k)=>x.sc&&x.sc[k]!=null?x.sc[k]:0), rasterC:x.rc||1, noise:Object.assign(defaultNoise(), x.nz||{})};
+      specC:Array.from({length:EQ.cluster.n},(_,k)=>x.sc&&x.sc[k]!=null?x.sc[k]:0), rasterC:x.rc||1, noise:Object.assign(defaultNoise(), x.nz||{}), sineAmp:x.sa!=null?x.sa:1};
   });
 }
 function updPoly(){
@@ -2074,7 +2089,7 @@ function updTempo(){
   $('tempoReset').style.display = S.stretch===1 ? 'none' : '';
   layoutSubs();
 }
-$('tempoBtn').onclick=()=>{ S.tempoMode=!S.tempoMode; updTempo(); dirty=true; if(S.tempoMode) toast('Tempo: mit zwei Fingern die Zeitleiste spreizen (langsamer) oder stauchen (schneller)'); };
+$('tempoBtn').onclick=()=>{ S.tempoMode=!S.tempoMode; updTempo(); dirty=true; if(S.tempoMode) toast('Tempo: Zeitleiste mit zwei Fingern dehnen (schneller) oder stauchen (langsamer)'); };
 $('tempoReset').onclick=()=>setStretch(1);
 
 // ---------- Zeitschleife ----------

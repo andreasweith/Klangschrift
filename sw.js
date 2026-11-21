@@ -1,7 +1,7 @@
 // Klangschrift – Offline-Speicher.
 // Die Seite selbst wird immer zuerst frisch aus dem Netz geholt (Updates erscheinen sofort);
 // nur ohne Internet kommt sie aus dem Speicher. Bei jeder neuen Version VERSION hochzählen.
-const VERSION = 'klangschrift-v13';
+const VERSION = 'klangschrift-v14';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
