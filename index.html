@@ -52,6 +52,26 @@
   #readout b{font-weight:600}
 
   #rp{display:flex;min-height:0}
+  #hpanel{display:none;width:196px;background:var(--panel);border-left:1px solid var(--line);padding:8px;flex-direction:column;gap:7px;overflow-y:auto;height:100%;box-sizing:border-box}
+  #hpanel.show{display:flex}
+  #hpanel h3{margin:0;font-size:13px;color:#ffd9a0;letter-spacing:.04em}
+  #hpanel .t{font-size:10px;color:var(--dim);letter-spacing:.05em}
+  #hpanel .ng2{display:grid;gap:4px;grid-template-columns:1fr 1fr}
+  #hpanel button{padding:6px 2px;font-size:12px;min-height:36px;background:linear-gradient(160deg,#ffb5471f,#ffffff08);border:1.5px solid #ffb54799;color:var(--txt)}
+  #hpanel button.sel{background:linear-gradient(160deg,#ffb547a6,#ffb54740);border-color:#ffb547;color:#fff;font-weight:700;box-shadow:0 0 14px #ffb54799, inset 0 1px 0 #ffffff55}
+  #hpanel .hvo{display:grid;gap:4px;grid-template-columns:repeat(4,1fr) 1.6fr}
+  #hpanel .hvo button{--vc:#ffb547;border-color:color-mix(in srgb,var(--vc) 60%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--vc) 14%,transparent),#ffffff08);font-weight:700}
+  #hpanel .hvo button.sel{background:linear-gradient(160deg,color-mix(in srgb,var(--vc) 70%,transparent),color-mix(in srgb,var(--vc) 28%,transparent));border-color:var(--vc);box-shadow:0 0 12px color-mix(in srgb,var(--vc) 60%,transparent)}
+  #hpanel .hvo button.mt{opacity:.55}
+  #hDecayW{position:relative;height:130px;flex:none;border-radius:8px;overflow:hidden;background:#0b0c0e;box-shadow:inset 0 0 0 1px #2c3139}
+  #hDecay{width:100%;height:100%;display:block;touch-action:none;cursor:ew-resize}
+  #hFaders{flex:1;display:flex;min-height:150px;padding-top:4px;border-top:1px solid var(--line)}
+  #hpanel .nsl .fill{background:#ffb547} #hpanel .nsl .cap{color:#ffb547} #hpanel .nsl.active .cap{box-shadow:0 0 0 2px #ffb547,0 2px 6px #000a}
+  body.light #hpanel{background:#d0d3d7} body.light #hpanel h3{color:#8a5a10}
+  body.light #hpanel button.sel{background:linear-gradient(160deg,#ffb547,#ffb547a6);color:#15191e}
+  body.light #hpanel .hvo button.sel{color:#15191e}
+  body.light #hDecayW{background:#2f333a}
+  body.light #hpanel .nsl .cap{color:#8a5a10}
   #npanel{display:none;width:214px;background:var(--panel);border-left:1px solid var(--line);padding:8px;flex-direction:column;gap:7px;overflow-y:auto;height:100%}
   #npanel h3{margin:0;font-size:13px;color:#cfe4ff;letter-spacing:.04em}
   #npanel .t{font-size:10px;color:var(--dim);letter-spacing:.05em}
@@ -109,8 +129,6 @@
   .step{font-size:12px;line-height:1.35;padding:7px 8px;border-radius:8px;background:#1d2127;color:var(--dim);border:1px solid transparent}
   .step.now{background:#2a2140;border-color:var(--clu);color:#efe6ff}
   .step b{color:inherit}
-  #hallRow{display:flex;align-items:center;gap:8px}
-  #hallRow button{flex:none}
   input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;touch-action:none}
   input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#2c3139}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:#c9a8ff;border:2px solid #1b1f25}
@@ -312,6 +330,16 @@
       </div>
     </div>
     <div id="rp">
+    <div id="hpanel">
+      <h3>HALL</h3>
+      <div class="t" id="hVoTxt">STIMMEN IM HALL</div>
+      <div class="hvo" id="hVoices"><button data-v="0">1</button><button data-v="1">2</button><button data-v="2">3</button><button data-v="3">4</button><button data-v="all">Alle</button></div>
+      <div class="t">NACHHALL · Ende der Kurve ziehen</div>
+      <div id="hDecayW"><canvas id="hDecay"></canvas></div>
+      <div class="ng2" id="hPre"><button data-t="0.5">Zimmer</button><button data-t="2">Saal</button><button data-t="4">Kirche</button><button data-t="8">Kathedrale</button></div>
+      <div class="t" style="line-height:1.4">Nachhallzeit: bis der Hall um 60 dB (auf ein Tausendstel) leiser geworden ist. Alle Stimmen klingen im selben Raum.</div>
+      <div id="hFaders"><div class="ncol"><div class="t">ANTEIL</div><div class="nsl v" id="hMix"></div></div></div>
+    </div>
     <div id="npanel">
       <h3>RAUSCHEN</h3>
       <div class="t">FARBE</div>
@@ -347,9 +375,7 @@
       <div class="step" id="step1"><b>① Cluster:</b> oben den Grundton antippen und nach rechts oben ziehen. Loslassen legt das Rechteck fest.</div>
       <div class="step" id="step2"><b>② Lautstärke:</b> unten aufsetzen (Anfangslautstärke) und nach rechts ziehen. Loslassen = Endlautstärke.</div>
       <div class="t" id="stkInfo"></div>
-      <div class="t">RAUM</div>
-      <div id="hallRow"><button class="tog" id="hallBtn"><span class="led"></span>Hall</button><span class="t" id="hallVal"></span></div>
-      <input type="range" id="hallTime" min="0.3" max="10" step="0.1" value="3">
+      <div class="t">RAUM: Hall unter „Klänge“</div>
       <div class="t">NACHJUSTIEREN (mit „✎ Edit“)</div>
       <div class="t" style="line-height:1.4">Anfasser in der Mitte: ganze Einheit verschieben (hoch, runter, links, rechts). Ecken: stauchen/dehnen und kürzen/verlängern – die Gegenseite bleibt fest. Punkte unten: Anfangs- und Schlusslautstärke.</div>
       <div class="t">Lautstärkeregler = Gesamtlautstärke · Radierer: Einheit antippen, nochmals Radierer = aus</div>
@@ -371,13 +397,14 @@
       <button class="tog snd" id="harmBtn">Harm.</button>
       <button class="tog snd" id="cluBtn">Cluster</button>
       <button class="tog" id="noiseBtn" title="Rauschen zumischen">Rauschen</button>
+      <button class="tog" id="hallKBtn" title="Hall für eine, mehrere oder alle Stimmen">Hall</button>
       <button class="tog" id="specBtn" style="display:none">Spektrum</button>
       <button class="tog" id="polyBtn"><span id="polyTxt">1</span></button>
       <button class="tog" id="stkChip" title="Stockhausen-Modus beenden">Stockhausen-Modus ✕</button>
     </div>
     <div class="grp" id="rowDraw" data-k="draw">
-      <button class="ico" id="tLine" title="Gerade"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 L9 6 L14 15 L21 4"/></svg></button>
-      <button class="ico sel" id="tCurve" title="Kurve"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14 C6 2 10 2 12 12 S18 22 22 9"/></svg></button>
+      <button class="ico sel" id="tLine" title="Gerade"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 L9 6 L14 15 L21 4"/></svg></button>
+      <button class="ico" id="tCurve" title="Kurve"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14 C6 2 10 2 12 12 S18 22 22 9"/></svg></button>
       <button class="ico" id="tErase" title="Radierer (nochmals tippen = aus)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15 L13 6 L20 13 L12 21 H8 Z"/><path d="M9 10 L16 17"/><path d="M13 21 H21"/></svg></button>
       <button class="ico" id="fingerBtn" title="Finger: schieben / zeichnen"><span class="emo">✋</span></button>
       <button class="ico" id="fitBtn" title="Gesamte Partitur"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5 V19 M22 5 V19 M5 12 H19 M5 12 L9 8 M5 12 L9 16 M19 12 L15 8 M19 12 L15 16"/></svg></button>
@@ -432,6 +459,7 @@
 <li><b>Sinus</b>, <b>Harm.</b> (Grundton + Obertöne), <b>Cluster</b> (Halbtonschichten)</li>
 <li><b>Spektrum</b>: Teiltöne mit Stift oder Finger wischen, zwei Finger zoomen, Vorlagen oben</li>
 <li><b>Rauschen</b>: Farbe, Filter, Mitte, Bandbreite; Mischung unter dem Spektrum</li>
+<li><b>Hall</b>: Stimmen 1–4 oder Alle in den gemeinsamen Raum schicken; Nachhall am Kurvenende ziehen oder Vorlage wählen; Anteil mit dem Regler</li>
 <li><b>1–4</b>: Stimme wählen (mehrstimmig)</li></ul></section>
 <section class="hs"><h3><span class="kc" style="--c:143,209,106">Zeichnen</span></h3><ul>
 <li>Gerade oder Kurve; bei der Geraden kurz anhalten = Ecke</li>
@@ -447,7 +475,7 @@
 <section class="hs"><h3><span class="kc" style="--c:180,140,255">Special</span></h3><ul>
 <li><b>Schwingungen</b>: Wellenform in Millisekunden; zwei Stimmen = Schwebung; Harm./Cluster = Fourier-Synthese (zwei Finger senkrecht = mehr Teiltöne)</li>
 <li>Doppeltipp auf die Zeitleiste = Messzeiger, Doppeltipp auf Zeiger = löschen</li>
-<li><b>Stockhausen</b>: Einheiten wie in der Studie II – Cluster-Rechteck, dann Lautstärke; Raster und Hall im Seitenfeld</li>
+<li><b>Stockhausen</b>: Einheiten wie in der Studie II – Cluster-Rechteck, dann Lautstärke; Raster im Seitenfeld, Hall unter Klänge</li>
 <li>Special nochmals tippen = Modus beenden</li></ul></section>
 <section class="hs"><h3><span class="kc" style="--c:111,180,255">Datei</span></h3><ul>
 <li>Speichern als Datei oder in der App</li>
@@ -501,7 +529,7 @@ const S = {
   stretch: 1, tempoMode: false,                      // Tempo: 1 Sekunde Partitur dauert „stretch“ Sekunden (>1 = langsamer)
   osc: false, oscPoly: false, pitch2: 0.452, vol2: 0.5, oscMs: 10, fourN: 1,
   scrollX: 0, pps: 80,
-  tool: 'curve', finger: 'pan',
+  tool: 'line', finger: 'pan',
   touching: { pitch: 0, vol: 0, fine: 0 }, fine1: 0.5, fine2: 0.5, scrub: false
 };
 let curves = { pitch: [], vol: [] };      // Partitur (vorgezeichnet)
@@ -535,7 +563,14 @@ const lenT = set => { const n=Math.max(set.pitch.length,set.vol.length); return 
 // Stockhausen-Modus: Einheiten aus Cluster-Rechteck und Lautstärke-Gerade
 let units = [];                 // {id,t0,t1,pa,pb,r,v0,v1,f[],p0,p1}
 let unitSeq = 1;
-const STK = { raster:'s', hall:false, hallTime:3 };
+const STK = { raster:'s' };
+const HALL = { on:[false,false,false,false], t:2, mix:0.35 };   // gemeinsamer Hallraum: Stimmen an/aus, Nachhallzeit, Anteil
+// Hall laden; ältere Partituren hatten nur den Stockhausen-Hall
+function loadHall(d){
+  if(d.hl){ HALL.on=[0,1,2,3].map(i=>!!(d.hl.on&&d.hl.on[i])); HALL.t=d.hl.t||2; HALL.mix=d.hl.mix!=null?d.hl.mix:0.35; }
+  else { HALL.on=[false,false,false,false]; if(d.stk && d.stk.hall){ HALL.on[0]=true; HALL.t=d.stk.hallTime||3; HALL.mix=0.5; } }
+  delete STK.hall; delete STK.hallTime;
+}
 const complete = u => !isNaN(u.v0);
 const pendingUnit = ()=> units.find(u=>!complete(u));
 const stockEnd = ()=> units.filter(complete).reduce((m,u)=>Math.max(m,u.t1),0);
@@ -555,7 +590,7 @@ function save(){
       p:pack(curves.pitch), v:pack(curves.vol), tp:pack(take.pitch), tv:pack(take.vol),
       sh:spec.harm.map(v=>+v.toFixed(4)), sc:spec.cluster.map(v=>+v.toFixed(4)), rc:raster.cluster,
       un:units.filter(complete).map(u=>({t0:u.t0,t1:u.t1,pa:u.pa,pb:u.pb,r:u.r,v0:u.v0,v1:u.v1})),
-      stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, voice:S.voice, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp, ht:harmTri
+      stk:{raster:STK.raster}, hl:HALL, voice:S.voice, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp, ht:harmTri
     }));
   }catch(e){}
 }
@@ -572,6 +607,7 @@ function load(){
     take.pitch = unpack(d.tp); take.vol = unpack(d.tv);
     if(Array.isArray(d.un)) units = d.un.map(u=>finishUnit(Object.assign({id:unitSeq++},u)));
     if(d.stk) Object.assign(STK,d.stk);
+    loadHall(d);
     if(Array.isArray(d.sh)) spec.harm = Array.from({length:EQ.harm.n},(_,i)=> d.sh[i]!=null ? d.sh[i] : 0);
     if(d.rc) raster.cluster=d.rc;
     if(Array.isArray(d.sc)) spec.cluster = Array.from({length:EQ.cluster.n},(_,i)=> d.sc[i]!=null ? d.sc[i] : 0);
@@ -582,13 +618,15 @@ function load(){
 // ---------- Audio ----------
 // Jede Stimme ist ein „Synth“: Sinus, Harm. Ton (PeriodicWave) und Cluster (Sinusbank im 100-Cent-Abstand),
 // alle an einer gemeinsamen Frequenzquelle. syn[0] = aktive Stimme bzw. Schwingung 1; weitere für Polyphonie.
-let post, dryG, wetG, conv, stBus, prevG;
+let post, dryG, wetG, conv, stBus, prevG, hallIn, stDry, stSend;
 let ac=null, master, limiter;
 const syn=[];
 let specVersion=0;
 class Synth{
   constructor(){
-    this.out=ac.createGain(); this.out.gain.value=0; this.out.connect(master);
+    this.out=ac.createGain(); this.out.gain.value=0;
+    this.dry=ac.createGain(); this.send=ac.createGain(); this.send.gain.value=0;      // trocken + Anteil in den gemeinsamen Hallraum
+    this.out.connect(this.dry); this.dry.connect(master); this.out.connect(this.send); this.send.connect(hallIn);
     this.fs=ac.createConstantSource(); this.fs.offset.value=440; this.fs.start();
     this.sine=this.osc(1); this.sG=this.amp(this.sine,this.out);
     this.harm=this.osc(1); this.hG=this.amp(this.harm,this.out);
@@ -674,11 +712,13 @@ function initAudio(){
     limiter.threshold.value=-4; limiter.knee.value=0; limiter.ratio.value=20; limiter.attack.value=0.002; limiter.release.value=0.15;
     limiter.connect(ac.destination);
     // post → trocken + Hall (Faltungshall) → Limiter
-    post = ac.createGain(); dryG = ac.createGain(); wetG = ac.createGain(); wetG.gain.value=0;
-    conv = ac.createConvolver(); makeImpulse();
-    post.connect(dryG); dryG.connect(limiter); post.connect(conv); conv.connect(wetG); wetG.connect(limiter);
+    post = ac.createGain(); dryG = ac.createGain(); wetG = ac.createGain(); wetG.gain.value=1;
+    hallIn = ac.createGain(); conv = ac.createConvolver(); makeImpulse();
+    post.connect(dryG); dryG.connect(limiter); hallIn.connect(conv); conv.connect(wetG); wetG.connect(limiter);
     master = ac.createGain(); master.gain.value = 1; master.connect(post);
-    stBus = ac.createGain(); stBus.gain.value = 0; stBus.connect(post);
+    stBus = ac.createGain(); stBus.gain.value = 0;
+    stDry = ac.createGain(); stSend = ac.createGain(); stSend.gain.value = 0;
+    stBus.connect(stDry); stDry.connect(post); stBus.connect(stSend); stSend.connect(hallIn);
     prevG = ac.createGain(); prevG.gain.value = 0; prevG.connect(stBus);
     getSyn(0); updateSpec(); applyNoise();
     ac.onstatechange = ()=>{ if(ac.state==='running') applyAudio(true); };
@@ -696,7 +736,7 @@ function audioIdleCheck(){
   if(!ac) return;
   clearTimeout(suspT);
   if(needAudio()){ if(ac.state!=='running') ac.resume().catch(()=>{}); return; }
-  const tail = 600 + ((S.stock && STK.hall) ? STK.hallTime*1000 : 0);      // Hall ausklingen lassen
+  const tail = 600 + (HALL.on.some(x=>x) ? HALL.t*1000 : 0);      // Hall ausklingen lassen
   suspT=setTimeout(()=>{ if(!needAudio() && ac.state==='running') ac.suspend().catch(()=>{}); }, tail);
 }
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && ac){ stop(); clearTimeout(suspT); ac.suspend().catch(()=>{}); } });
@@ -727,9 +767,8 @@ function applyAudio(force){
   if(!ac) return;
   const t = ac.currentTime;
   const sb = S.stock ? 1.6*S.vol*S.vol : 0;
-  const wg = (S.stock && STK.hall) ? 0.5 : 0;
   if(force || sb!==last.sb){ stBus.gain.setTargetAtTime(sb,t,0.03); last.sb=sb; }
-  if(force || wg!==last.wg){ wetG.gain.setTargetAtTime(wg,t,0.05); last.wg=wg; }
+  applyHall(force);
   const on = sounding() && !S.rest && !S.stock;
   getSyn(0).set(S.voice, S.osc ? oscF1() : freqOf(S.pitch), on ? 0.5*S.vol*S.vol : 0, force);   // quadratisch ≈ gehörrichtig
   if(S.osc && S.oscPoly) getSyn(1).set(S.voice, oscF2(), (S.tone && !S.stock) ? 0.5*S.vol2*S.vol2 : 0, force);
@@ -1322,7 +1361,7 @@ $('homeBtn').onclick=()=>{ S.playT=0; S.scrollX=0; recLast={pitch:null,vol:null}
 $('fitBtn').onclick=fitAll;
 
 function setTool(t){ S.tool=t; $('tCurve').classList.toggle('sel',t==='curve'); $('tLine').classList.toggle('sel',t==='line'); $('tErase').classList.toggle('sel',t==='erase'); }
-let drawTool='curve';
+let drawTool='line';
 $('tCurve').onclick=()=>{ drawTool='curve'; setTool('curve'); };
 $('tLine').onclick=()=>{ drawTool='line'; setTool('line'); };
 $('tErase').onclick=()=> setTool(S.tool==='erase' ? drawTool : 'erase');   // zweites Antippen schaltet den Radierer wieder aus
@@ -1615,19 +1654,88 @@ function stopStockUnit(u){
 function stopStock(){ units.forEach(stopStockUnit); stkVoices.clear(); }
 
 // Hall: künstliche Raumantwort (abklingendes Rauschen), Nachhall = Zeit bis −60 dB
+// Ein gemeinsamer Hallraum; jede Stimme kann hineingeschickt werden. t = Nachhallzeit (−60 dB), mix = Anteil
+let hallOpen=false;
 function makeImpulse(){
   if(!ac) return;
-  const sr=ac.sampleRate, len=Math.max(1,Math.floor(sr*(STK.hallTime+0.1))), buf=ac.createBuffer(2,len,sr);
+  const T=HALL.t, sr=ac.sampleRate, len=Math.max(1,Math.floor(sr*(T+0.1))), buf=ac.createBuffer(2,len,sr);
   for(let ch=0;ch<2;ch++){
     const d=buf.getChannelData(ch);
-    for(let i=0;i<len;i++){ const t=i/sr; d[i]= t<0.012 ? 0 : (Math.random()*2-1)*Math.exp(-6.9*t/STK.hallTime); }
+    // erste Reflexionen nach ~12 ms, dann dichter werdendes, exponentiell abklingendes Rauschen (−60 dB nach T)
+    for(let i=0;i<len;i++){ const t=i/sr; d[i]= t<0.012 ? 0 : (Math.random()*2-1)*Math.exp(-6.9*t/T)*Math.min(1,(t-0.012)/0.02); }
   }
   conv.buffer=buf;
 }
-let hallT=0;
-$('hallTime').oninput=e=>{ STK.hallTime=+e.target.value; updHall(); clearTimeout(hallT); hallT=setTimeout(()=>{ makeImpulse(); saveSoon(); },200); };
-$('hallBtn').onclick=()=>{ initAudio(); STK.hall=!STK.hall; updHall(); applyAudio(); saveSoon(); };
-function updHall(){ $('hallBtn').classList.toggle('on',STK.hall); $('hallTime').value=STK.hallTime; $('hallVal').textContent='Nachhall '+STK.hallTime.toFixed(1).replace('.',',')+' s'; $('hallTime').style.opacity=STK.hall?1:.45; }
+const hallGains = on => on ? [1-0.7*HALL.mix, 0.9*HALL.mix] : [1,0];
+function applyHall(force){
+  if(!ac) return;
+  const t=ac.currentTime;
+  syn.forEach((s,k)=>{ if(!s) return;
+    const li = k===0 ? S.layer : k-1;                                   // syn[0] = aktive Stimme, syn[i+1] = Stimme i
+    const [d,w] = hallGains(!S.osc && !!HALL.on[li]);
+    if(force || s.hd!==d || s.hw!==w){ s.dry.gain.setTargetAtTime(d,t,0.04); s.send.gain.setTargetAtTime(w,t,0.04); s.hd=d; s.hw=w; } });
+  const [d,w] = hallGains(S.stock && !!HALL.on[S.layer]);
+  if(force || last.hd!==d || last.hw!==w){ stDry.gain.setTargetAtTime(d,t,0.04); stSend.gain.setTargetAtTime(w,t,0.04); last.hd=d; last.hw=w; }
+}
+function updHall(){
+  $('hallKBtn').classList.toggle('on', hallOpen);
+  $('hpanel').classList.toggle('show', hallOpen);
+  const vb=[...document.querySelectorAll('#hVoices button')];
+  vb.forEach(b=>{ const v=b.dataset.v;
+    if(v==='all') b.classList.toggle('sel', HALL.on.every(x=>x));
+    else { const i=+v; b.style.setProperty('--vc', VCOL[i][0]); b.classList.toggle('sel', HALL.on[i]);
+           b.classList.toggle('mt', i!==S.layer && !hasNotation(layers[i]));
+           b.style.display = (S.stock && i>0) ? 'none' : ''; } });
+  vb[4].style.display = S.stock ? 'none' : '';
+  $('hVoTxt').textContent = S.stock ? 'HALL FÜR DIE STUDIE' : 'STIMMEN IM HALL';
+  if(S.stock) vb[0].textContent='an'; else vb[0].textContent='1';
+  document.querySelectorAll('#hPre button').forEach(b=>b.classList.toggle('sel', Math.abs(+b.dataset.t-HALL.t)<0.01));
+  setSl('hMix', HALL.mix, Math.round(HALL.mix*100)+' %');
+  drawDecay();
+}
+// Abklingkurve: Pegel in dB über der Zeit; das Ende (−60 dB) lässt sich ziehen
+let decayAxis=4, decayDrag=null;
+const niceAxis = T => [1,2,3,4,6,8,10,12].find(a=>a>=T*1.25) || 12;
+function drawDecay(){
+  const c=$('hDecay'); if(!c || !hallOpen) return;
+  if(decayDrag==null) decayAxis=niceAxis(HALL.t);           // Achse passt sich nach dem Ziehen an
+  const r=c.getBoundingClientRect(), dpr=devicePixelRatio||1; if(!r.width) return;
+  if(c.width!==Math.round(r.width*dpr)){ c.width=Math.round(r.width*dpr); c.height=Math.round(r.height*dpr); }
+  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height, L=26, Rr=8, Tp=10, B=18, A=decayAxis;
+  const X=t=>L+(W-L-Rr)*t/A, Y=db=>Tp+(H-Tp-B)*(-db/60);
+  g.clearRect(0,0,W,H);
+  g.font='9px -apple-system,system-ui,sans-serif'; g.textBaseline='middle';
+  for(const db of [0,-20,-40,-60]){ g.strokeStyle='#ffffff14'; g.beginPath(); g.moveTo(L,Y(db)); g.lineTo(W-Rr,Y(db)); g.stroke(); g.fillStyle='#8a929c'; g.textAlign='right'; g.fillText(db,L-4,Y(db)); }
+  const step = A<=2 ? 0.5 : A<=4 ? 1 : 2; g.textAlign='center';
+  for(let t=0;t<=A+1e-6;t+=step){ g.strokeStyle='#ffffff10'; g.beginPath(); g.moveTo(X(t),Tp); g.lineTo(X(t),H-B); g.stroke(); g.fillStyle='#8a929c'; g.fillText(fmtNum(t,step<1?1:0)+(t===0?'':' s'),X(t),H-B/2+1); }
+  // Hallgebirge (Hüllkurve des Rauschens, in dB) als Fläche
+  const T=HALL.t; g.fillStyle='#ffb5472e'; g.beginPath(); g.moveTo(X(0),Y(-60));
+  for(let i=0;i<=120;i++){ const t=T*i/120, n=Math.sin(i*12.9898)*43758.5453, j=(n-Math.floor(n))*6; g.lineTo(X(t),Y(Math.max(-60,-60*t/T-j))); }
+  g.lineTo(X(T),Y(-60)); g.closePath(); g.fill();
+  g.strokeStyle='#ffb547'; g.lineWidth=2; g.beginPath(); g.moveTo(X(0),Y(0)); g.lineTo(X(T),Y(-60)); g.stroke(); g.lineWidth=1;
+  g.fillStyle='#ffb547'; g.beginPath(); g.arc(X(T),Y(-60),6,0,7); g.fill();
+  g.fillStyle='#fff'; g.font='600 11px -apple-system,system-ui,sans-serif'; g.textAlign = X(T)>W-60 ? 'right' : 'left';
+  g.fillText('T = '+fmtNum(T,T<1?2:1)+' s', X(T)>W-60 ? X(T)-8 : X(T)+8, Y(-60)-12);
+}
+function setHallT(T, fromPreset){
+  HALL.t=Math.round(clamp(T,0.3,10)*20)/20;
+  if(fromPreset) decayAxis=niceAxis(HALL.t);
+  updHall(); clearTimeout(setHallT.k); setHallT.k=setTimeout(()=>{ makeImpulse(); saveSoon(); },150);
+}
+{ const c=$('hDecay');
+  const tOf=e=>{ const r=c.getBoundingClientRect(); return decayAxis*(e.clientX-r.left-26)/(r.width-34); };
+  c.addEventListener('pointerdown',e=>{ e.preventDefault(); initAudio(); decayDrag=e.pointerId; c.setPointerCapture(e.pointerId); setHallT(tOf(e)); });
+  c.addEventListener('pointermove',e=>{ if(e.pointerId===decayDrag) setHallT(tOf(e)); });
+  const up=e=>{ if(e.pointerId!==decayDrag) return; decayDrag=null; decayAxis=niceAxis(HALL.t); drawDecay(); };
+  c.addEventListener('pointerup',up); c.addEventListener('pointercancel',up);
+  new ResizeObserver(()=>drawDecay()).observe(c); }
+$('hallKBtn').onclick=()=>{ initAudio(); hallOpen=!hallOpen; updHall(); requestAnimationFrame(resize); };
+document.querySelectorAll('#hVoices button').forEach(b=>b.onclick=()=>{ initAudio();
+  if(b.dataset.v==='all'){ const all=HALL.on.every(x=>x); HALL.on=HALL.on.map(()=>!all); }
+  else { const i = S.stock ? S.layer : +b.dataset.v; HALL.on[i]=!HALL.on[i]; }
+  updHall(); applyAudio(); saveSoon(); });
+document.querySelectorAll('#hPre button').forEach(b=>b.onclick=()=>{ initAudio(); setHallT(+b.dataset.t,true); });
 
 // Modus ein/aus (Knopf rechts unten)
 $('stockBtn').onclick=()=>{
@@ -1645,7 +1753,7 @@ $('stockBtn').onclick=()=>{
   S.playT=0; S.scrollX=0; updStepUI(); applyAudio(true); requestAnimationFrame(resize); dirty=true; updateFaders();
 };
 $('editBtn').onclick=()=>{ S.edit=!S.edit; $('editBtn').classList.toggle('on',S.edit); dirty=true; };
-updRaster(); updHall(); updStepUI();
+updRaster(); updStepUI();
 
 
 // =================== Speichern & Öffnen ===================
@@ -1657,7 +1765,7 @@ function serialize(){
     p:pack(curves.pitch), v:pack(curves.vol), tp:pack(take.pitch), tv:pack(take.vol),
     sh:spec.harm.map(v=>+v.toFixed(4)), sc:spec.cluster.map(v=>+v.toFixed(4)), rc:raster.cluster,
     un:units.filter(complete).map(u=>({t0:+u.t0.toFixed(4),t1:+u.t1.toFixed(4),pa:u.pa,pb:u.pb,r:u.r,v0:u.v0,v1:u.v1})),
-    stk:{raster:STK.raster,hall:STK.hall,hallTime:STK.hallTime}, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp, ht:harmTri };
+    stk:{raster:STK.raster}, hl:HALL, layer:S.layer, layers:packLayers(), nz:noise, stretch:S.stretch, sa:sineAmp, ht:harmTri };
 }
 function applyData(d){
   if(!d || d.app!=='Klangschrift') throw new Error('keine Klangschrift-Datei');
@@ -1667,7 +1775,8 @@ function applyData(d){
   if(Array.isArray(d.sc)) spec.cluster=Array.from({length:EQ.cluster.n},(_,i)=>d.sc[i]!=null?d.sc[i]:0);
   if(d.rc) raster.cluster=d.rc;
   units=(d.un||[]).map(u=>finishUnit(Object.assign({id:unitSeq++},u)));
-  if(d.stk){ Object.assign(STK,d.stk); makeImpulse(); }
+  if(d.stk) Object.assign(STK,d.stk);
+  loadHall(d); makeImpulse(); applyAudio(); updHall();
   unpackLayers(d);
   noise=Object.assign(defaultNoise(), d.nz||{}); applyNoise(); updNoisePanel();
   S.stretch=d.stretch||1; updTempo(); sineAmp = d.sa!=null ? d.sa : 1; harmTri=!!d.ht; applyNoise();
@@ -1804,7 +1913,7 @@ function switchLayer(i){
   curves=L.curves; take=L.take; spec.harm=L.specH.slice(); spec.cluster=L.specC.slice(); raster.cluster=L.rasterC;
   sineAmp = L.sineAmp!=null ? L.sineAmp : 1; harmTri=!!L.harmTri;
   noise=Object.assign(defaultNoise(), L.noise||{}); applyNoise(); updNoisePanel();
-  setVoice(L.voice); drawEq(); updPoly(); dirty=true; updateFaders(); saveSoon();
+  setVoice(L.voice); drawEq(); updPoly(); updHall(); applyAudio(); dirty=true; updateFaders(); saveSoon();
 }
 function prepareLayers(){
   if(!ac) return;
@@ -2169,17 +2278,17 @@ $('nTrack').onclick=()=>{ const f0=freqOf(S.pitch);
 const SLP=13;                                            // halbe Kappenhöhe/-breite → Rand der Bahn
 function setSl(id,v,txt){
   const el=$(id), h=el.classList.contains('h'); v=clamp(v);
-  const cap=el.querySelector('.cap'), fill=el.querySelector('.fill');
+  const cap=el.querySelector('.cap'), fill=el.querySelector('.fill'); if(!cap) return;
   if(h){ cap.style.left=`calc(28px + ${v} * (100% - 36px))`; fill.style.width=(v*100)+'%'; }
   else { cap.style.top=`calc(${SLP}px + ${1-v} * (100% - ${2*SLP}px))`; fill.style.height=(v*100)+'%'; }
   cap.textContent=txt;
 }
-function mkSl(id,onSet){
+function mkSl(id,onSet,after){
   const el=$(id), h=el.classList.contains('h'); let pid=null;
   el.innerHTML='<div class="track"><div class="fill"></div></div><div class="cap"></div>';
   const from=e=>{ const r=el.getBoundingClientRect();
     const v = h ? (e.clientX-r.left-28)/(r.width-36) : 1-(e.clientY-r.top-SLP)/(r.height-2*SLP);
-    onSet(clamp(v)); noise.preset=null; noiseChanged(); };
+    onSet(clamp(v)); if(after) after(); else { noise.preset=null; noiseChanged(); } };
   el.addEventListener('pointerdown',e=>{ e.preventDefault(); initAudio(); pid=e.pointerId; el.setPointerCapture(pid); el.classList.add('active'); from(e); });
   el.addEventListener('pointermove',e=>{ if(e.pointerId===pid) from(e); });
   const up=e=>{ if(e.pointerId!==pid) return; pid=null; el.classList.remove('active'); };
@@ -2188,6 +2297,8 @@ function mkSl(id,onSet){
 mkSl('nFreq', v=>{ if(noise.track) noise.ratio=logMap(v*1000,0.25,16); else noise.fc=logMap(v*1000,40,16000); });
 mkSl('nBw',   v=>{ noise.bw=+(0.1*Math.pow(60,v)).toFixed(2); });
 mkSl('nMix',  v=>{ noise.mix=v; });
+mkSl('hMix',  v=>{ HALL.mix=Math.round(v*100)/100; }, ()=>{ updHall(); applyAudio(); saveSoon(); });
+updHall();
 // Vorlagen: typische Rauschanteile, mit dem Grundton verknüpft
 const NPRE={
   flute:{color:'white',filter:'band',track:true,ratio:2.5,bw:2.5,mix:0.15},
